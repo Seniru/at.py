@@ -1,0 +1,6 @@
+*.pyc
+*.pyd
+
+# editor stuff
+launch.json
+settings.json
