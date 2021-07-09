@@ -27,6 +27,8 @@ from typing import Callable, Tuple, Union
 
 import serial
 
+from .PhoneBook import PhoneBookEntry
+
 from .message import Message
 
 
@@ -117,16 +119,27 @@ class Phone(serial.Serial):
 
 	async def _collect(self):
 		"""Start collecting messages from the input buffer
-		"""		
+		"""
+		in_buffer_waiting = None		
 		while self.readable():
 			try:
 				if self.inWaiting() != 0:
 					in_buffer = self.read_all()
-					for line in in_buffer.splitlines():
-						if line != b"":
-							line = line.decode("utf-8")
-							await self.loop.create_task(self._handle_messages(line))
-							await self.dispatch("message", line)
+					if in_buffer.endswith(b"\r\n"):
+						if in_buffer_waiting is not None:
+							in_buffer = in_buffer_waiting + in_buffer
+							in_buffer_waiting = None
+						for line in in_buffer.splitlines():
+							if line != b"":
+								line = line.decode("utf-8")	
+								await self.loop.create_task(self._handle_messages(line))
+								await self.dispatch("message", line)
+					else:
+						if in_buffer_waiting is None:
+							in_buffer_waiting = in_buffer
+						else:
+							in_buffer_waiting += in_buffer
+
 			except KeyboardInterrupt:
 				self.close()
 				await self.dispatch("close")
@@ -143,11 +156,12 @@ class Phone(serial.Serial):
 			self.at_resp_complete = True
 			await self.dispatch("response", message)
 		
-	async def exec_AT(self, cmd: str = None):
+	async def exec_AT(self, cmd: Union[Message, str] = None):
+		
 		"""Executes the AT command
 
 		Args:
-			cmd (str, optional): The command. Defaults to None.
+			cmd (Union[Message, str], optional): The command. Defaults to None.
 
 		Raises:
 			Exception: If the module hasn't initialized yet or the previous AT command didn't receive
@@ -265,4 +279,24 @@ class Phone(serial.Serial):
 		fut = self.loop.create_future()
 		self._waiters[evt].append((cond, fut))
 		return await asyncio.wait_for(fut, timeout)
+
+	async def list_phonebook_entries(self, start: int, stop: int = None):
+		"""Lists the phonebook entries within the range
+
+		Args:
+			start (int): Start position
+			stop (int, optional): Stop position, if `None` only return the start entry. Defaults to None.
+
+		Returns:
+			list[PhoneBookEntry]: Phonebook entires
+		"""
+		entries: list[PhoneBookEntry] = []
+		await self.exec_AT(Message("", "+CPBR", Message.types.SET, parameters = [ start, stop or start ]))
+		try:
+			for i in range(start, (stop or start) + 1):
+				resp = await self.wait_for("response", lambda message: Message.from_payload(message).command == "+CPBR", timeout=4)
+				entries.append(PhoneBookEntry.from_payload(resp))
+		except asyncio.exceptions.TimeoutError:
+			pass
+		return entries
 
