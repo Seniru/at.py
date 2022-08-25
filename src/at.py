@@ -23,13 +23,13 @@ SOFTWARE.
 """
 
 import asyncio
+from pydoc import doc
 from typing import Callable, Tuple, Union
 
 import serial
 
+from .Message import Message
 from .PhoneBook import PhoneBookEntry
-
-from .message import Message
 
 
 class Phone(serial.Serial):
@@ -280,6 +280,19 @@ class Phone(serial.Serial):
 		self._waiters[evt].append((cond, fut))
 		return await asyncio.wait_for(fut, timeout)
 
+	async def get_available_commands(self):
+		"""Lists all of the commands supported by the module
+
+		Returns:
+			list[str]: the commands
+		"""
+		await self.exec_AT(Message("", "+CLAC", Message.types.EXECUTE))
+		resp = await self.wait_for("response", lambda message: Message.from_payload(message).command == "+CLAC", timeout=4)
+		#return [ Message.from_payload("AT" + cmd) for cmd in resp[:-1].split(",") ]
+		return resp[:-1].split(",")
+
+
+
 	async def list_phonebook_entries(self, start: int, stop: int = None):
 		"""Lists the phonebook entries within the range
 
@@ -299,4 +312,19 @@ class Phone(serial.Serial):
 		except asyncio.exceptions.TimeoutError:
 			pass
 		return entries
+
+	async def find_phonebook_entries(self, searchfor: str):
+		"""Lists phonebook entries that matches with the search string
+
+		NOTE: Method not tested
+
+		Args:
+			searchfor (str): The search string
+
+		Returns:
+			list[PhoneBookEntry]: Matched phonebook entries
+		"""
+		entries: list[PhoneBookEntry] = []
+		await self.exec_AT(Message("", "+CPBF", Message.types.SET, parameters = [searchfor or ""]))
+
 

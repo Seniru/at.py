@@ -23,7 +23,7 @@ SOFTWARE.
 """
 
 import re
-from typing import Any, Optional, TypeVar, Union
+from typing import Any, Optional, Union
 from enum import Enum
 
 class Message:
@@ -40,6 +40,7 @@ class Message:
 		READ 			= "?"
 		TEST 			= "=?"
 
+
 	def __init__(self, prefix: str, command: str, type: types, outbound: bool = True, parameters: Any = None):
 		"""Creates a Message instance
 
@@ -55,7 +56,7 @@ class Message:
 		self.command = command
 		self.type = type
 		self.outbound = outbound
-		self.parameters = parameters
+		self.parameters = parameters or []
 
 	def __str__(self):
 		"""`__str__` magicmethod to be used in str().
@@ -103,10 +104,10 @@ class Message:
 			return Message(None, payload, cls.types.BASIC_RESPONSE, False, None)
 
 		elif payload.startswith("AT"):
-			match = re.match(r"([+@#&%]?\w+)(:|=\?|=|\?|\s)?(.*)", payload[2:])
+			match = re.match(r"([+\\\^$@#&%]?\w+)(:|=\?|=|\?|\s)?(.*)", payload[2:])
 			resp_type = cls.types(match[2]) if match[2] else cls.types.EXECUTE
 			return Message("AT", match[1], resp_type, True, cls._parse_parameters(match[3]))
-		elif match := re.match(r"([+@#&%^]?[\w\s]+):(.*)", payload):
+		elif match := re.match(r"([+\\\^$@#&%]?[\w\s]+):(.*)", payload):
 			return Message(None, match[1], cls.types.RESPONSE, False, cls._parse_parameters(match[2]))
 
 
@@ -210,6 +211,7 @@ class Message:
 		Returns:
 			str: Stringified message.
 		"""
+		if len(params) == 1 and type(params[0]) == str: return params[0]
 		res = ""
 		for param in params or []:
 			if type(param) == list:

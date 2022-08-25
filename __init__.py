@@ -1,3 +1,3 @@
 import src.PhoneBook as PhoneBook
-import src.message as message
+import src.Message as Message
 import src.at as at

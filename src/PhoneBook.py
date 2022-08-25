@@ -24,7 +24,7 @@ SOFTWARE.
 
 from enum import Enum
 
-from .message import Message
+from .Message import Message
 
 class NumberingSchemes(Enum):
 	"""Numbering schemes implemented in phonebooks
