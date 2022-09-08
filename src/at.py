@@ -30,6 +30,7 @@ import serial
 
 from .Message import Message
 from .PhoneBook import PhoneBookEntry
+from .SMS import SMSBase
 
 
 class Phone(serial.Serial):
@@ -327,4 +328,8 @@ class Phone(serial.Serial):
 		entries: list[PhoneBookEntry] = []
 		await self.exec_AT(Message("", "+CPBF", Message.types.SET, parameters = [searchfor or ""]))
 
-
+	async def read_message(self, entry=None):
+		await self.exec_AT(Message("", "+CMGR", Message.types.SET, parameters = [entry or 1]))
+		resp1 = await self.wait_for("response", lambda resp: resp.startswith("+CMGR"))
+		resp2 = await self.wait_for("message")
+		return SMSBase.from_payload(resp1 + "\n" + resp2)

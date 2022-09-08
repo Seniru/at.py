@@ -77,7 +77,7 @@ class Message:
 		Returns:
 			str: Representation of the object.
 		"""
-		return f"Message<prefix={self.prefix}, command={self.command}, type={self.type}, outbound={self.outbound}, parameters={self.parameters}, body='{str(self)}'>"
+		return f"< Message prefix={self.prefix}, command={self.command}, type={self.type}, outbound={self.outbound}, parameters={self.parameters}, body='{str(self)}'>"
 
 	@classmethod
 	def from_payload(cls, payload: Union[bytes, str]):

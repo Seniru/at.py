@@ -64,7 +64,7 @@ class PhoneBookEntry:
 		Returns:
 			str: A stringified version of the object.
 		"""
-		return f"<PhoneBookEntry<index={self.index}, number='{self.number}', scheme={self.scheme}, contactname='{self.contact_name}'>"
+		return f"<PhoneBookEntry index={self.index}, number='{self.number}', scheme={self.scheme}, contactname='{self.contact_name}'>"
 
 	@staticmethod
 	def from_payload(payload: str):
