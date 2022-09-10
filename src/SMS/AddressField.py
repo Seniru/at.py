@@ -1,6 +1,8 @@
 from enum import Enum
 import io
 
+from .UserDataEncoding import Default
+
 class AddressField:
 
 	class NumberTypes(Enum):
@@ -46,10 +48,14 @@ class AddressField:
 	def read_address_field(cls, buffer: io.StringIO, addr_len: int = None):
 		l = addr_len or int(buffer.read(2), 16)
 		address_type = int(buffer.read(2), 16)
+		is_alphanumeric = (address_type & 0b1110000) == AddressField.NumberTypes.ALPHANUMERIC.value
 		number = ""
+
 		for i in range(0, l, 2):
-			number += buffer.read(2)[::-1]
-		number = number.upper().replace("F", "")
+			number += buffer.read(2)[::1 if is_alphanumeric else -1]
+		
+		number = Default.decode(number) if is_alphanumeric else number.upper().replace("F", "")
+
 		return AddressField(
 			address_type,
 			number
