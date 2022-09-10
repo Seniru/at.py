@@ -1,4 +1,5 @@
 import abc
+from base64 import encode
 
 
 class UserDataEncoding(abc.ABC):
@@ -34,8 +35,14 @@ class Default(UserDataEncoding):
                 i, b = 0, ""
         return "".join(decoded)
 
-    def encode(text):
-        raise NotImplementedError
+    def encode(text: str):
+        chars = list(text)
+        bits = ""
+        for char in chars:
+            bits = format(ord(char), "07b") + bits
+        return "".join(
+            [format(int(bits[max(i-8, 0):i], 2), "02X") for i in range(len(bits), -1, -8)]
+        )
 
 class UCS2(UserDataEncoding):
 
