@@ -49,8 +49,9 @@ class UCS2(UserDataEncoding):
     def __init__(self, msgClass = None):
         super().__init__(msgClass)
 
-    def decode():
-        raise NotImplementedError
+    def decode(pdu):
+        return bytes([int(pdu[i:i+2], 16) for i in range(0, len(pdu), 2)]).decode("utf-16be")
 
-    def encode():
-        raise NotImplementedError
+    def encode(text: str):
+        import binascii
+        return binascii.hexlify(text.encode("utf-16be")).upper().decode("utf8")

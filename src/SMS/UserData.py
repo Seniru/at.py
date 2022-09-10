@@ -31,8 +31,8 @@ class UserData:
 	@classmethod
 	def get_encoding(cls, dcs):
 		msgClass = dcs & 1
-		if dcs & 0b110 == 0:
+		if dcs & 0b1100 == 0:
 			return UserDataEncoding.Default(msgClass)
-		elif dcs & 0b110 == 0b10:
+		elif dcs & 0b1100 == 0b1000:
 			return UserDataEncoding.UCS2(msgClass)
 		return None
